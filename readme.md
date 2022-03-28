@@ -2,7 +2,7 @@ Problem Statement:
 Having a sleep system that is able to temperature control your bed while you sleep is a great invention. Furthermore, being able to control functions of the device via a smartphone is a great addition to this device. However, there is an inherent problem with this. Should you wake up in the middle of the night and decide that the temperature of the bed is not where you would like it, you must pull up your smartphone, causing you to wake up even more. I believe that the creation of a smart watch would somewhat mitigate this problem while also adding more value to the device itself. 
 
 The Vision:
- My vision is to create a watch app that’s sole purpose is to be able to turn the device on as well as control the temperature in real time. Furthermore, I would like to be able to utilize the rotating bezel of my watch face as a physical means to increment or decrement the temperature. I would also like to implement a colored background that changes depending on the temperature. I.E. Blue=cold, green=in the middle, red=hot. 
+ï¿½My vision is to create a watch app thatï¿½s sole purpose is to be able to turn the device on as well as control the temperature in real time. Furthermore, I would like to be able to utilize the rotating bezel of my watch face as a physical means to increment or decrement the temperature. I would also like to implement a colored background that changes depending on the temperature. I.E. Blue=cold, green=in the middle, red=hot. 
 
 
 Deliverables
@@ -11,6 +11,10 @@ Deliverables
 -sync with Bluetooth  
 
 
+Success Metrics
+-Successfully establish a connection with an Ooler sleep unit.
+-Successfully adjust temperature of Ooler unit in real time using the watch app.
+-Successfully power the device on and off
 
 Personas:
 Chase wakes up in the middle of the night very hot. He wants to adjust the temperature of his ooler and go back to sleep. However, when he grabs his phone to adjust the temperature, his phone screen wakes him up and has trouble falling back asleep for another 30 minutes.
