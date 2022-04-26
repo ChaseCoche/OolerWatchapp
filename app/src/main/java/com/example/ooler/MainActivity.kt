@@ -39,12 +39,10 @@ class MainActivity : Activity() {
 
 
 
-        scanButton.setOnClickListener{
-            if(isScanning)
-            {
+        scanButton.setOnClickListener {
+            if (isScanning) {
                 stopBleScan()
-            }
-            else {
+            } else {
                 startBleScan()
             }
         }
@@ -54,8 +52,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
-        if(!bluetoothAdapter.isEnabled)
-        {
+        if (!bluetoothAdapter.isEnabled) {
             promptEnableBluetooth()
         }
     }
@@ -64,7 +61,7 @@ class MainActivity : Activity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private val bluetoothAdapter: BluetoothAdapter by lazy{
+    private val bluetoothAdapter: BluetoothAdapter by lazy {
         val bluetoothManager = getSystemService(BLUETOOTH_SERVICE) as BluetoothManager
         bluetoothManager.adapter
     }
@@ -72,7 +69,6 @@ class MainActivity : Activity() {
     private val scanResults = mutableListOf<ScanResult>()
 
     private var isScanning = false
-
         set(value) {
             val scanButton = findViewById<Button>(R.id.scan_button) as Button
             field = value
@@ -80,26 +76,25 @@ class MainActivity : Activity() {
         }
 
 
-    private val btScanner by lazy{
+    private val btScanner by lazy {
         bluetoothAdapter.bluetoothLeScanner
     }
 
     private val scanCallback = object : ScanCallback() {
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
-            val indexQuery=scanResults.indexOfFirst{it.device.address == result.device.address}
+            val indexQuery = scanResults.indexOfFirst { it.device.address == result.device.address }
             var flag = 0
-            if(indexQuery!=-1){
-                scanResults[indexQuery]=result
+            if (indexQuery != -1) {
+                scanResults[indexQuery] = result
                 flag = 1
             }
             with(result.device) {
 
 
-                if(result.device.address == "84:2E:14:83:11:68" && flag!=1)
-                {
+                if (result.device.address == "84:2E:14:83:11:68" && flag != 1) {
                     Timber.i(
-                    "Found OOLER device! Name: ${name ?: "Unnamed"}, address: $address"
+                        "Found OOLER device! Name: ${name ?: "Unnamed"}, address: $address"
                     )
                     scanResults.add(result)
                     stopBleScan()
@@ -118,24 +113,28 @@ class MainActivity : Activity() {
 
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    Log.w("BluetoothGattCallback", "Successfully connected to $deviceAddress")
+                    Timber.w("Successfully connected to $deviceAddress")
                     // TODO: Store a reference to BluetoothGatt
                 } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    Log.w("BluetoothGattCallback", "Successfully disconnected from $deviceAddress")
+                    Timber.w("Successfully disconnected from $deviceAddress")
                     gatt.close()
                 }
             } else {
-                Log.w("BluetoothGattCallback", "Error $status encountered for $deviceAddress! Disconnecting...")
+                Timber.w(
+
+                    "Error $status encountered for $deviceAddress! Disconnecting..."
+                )
                 scanResults.clear()
                 gatt.close()
             }
         }
     }
 
-   /* private
-*/
+    /* private
+ */
 
-    private val scanSettings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
+    private val scanSettings =
+        ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
 
     private val isLocationPermissionGranted
         get() = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -144,60 +143,49 @@ class MainActivity : Activity() {
     @SuppressLint("MissingPermission")
 
 
-
     //-------------------Private Functions------------------------
-    private fun promptEnableBluetooth(){
-        if(!bluetoothAdapter.isEnabled){
+    private fun promptEnableBluetooth() {
+        if (!bluetoothAdapter.isEnabled) {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             startActivityForResult(enableBtIntent, ENABLE_BLUETOOTH_REQUEST_CODE)
         }
     }
 
     @SuppressLint("MissingPermission")
-    private fun startBleScan()
-    {
-        if (!isLocationPermissionGranted)
-        {
+    private fun startBleScan() {
+        if (!isLocationPermissionGranted) {
             requestLocationPermission()
-        }
-        else{
+        } else {
             btScanner.startScan(null, scanSettings, scanCallback)
             isScanning = true
         }
     }
 
     @SuppressLint("MissingPermission")
-    private fun stopBleScan()
-    {
+    private fun stopBleScan() {
         btScanner.stopScan(scanCallback)
         isScanning = false
     }
 
 
-
-    private fun requestLocationPermission(){
-        if(isLocationPermissionGranted){
-            return}
-            requestPermission(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                LOCATION_PERMISSION_REQUEST_CODE
-            )
-    }
-        private fun Activity.requestPermission(permission: String, requestCode: Int) {
-            ActivityCompat.requestPermissions(this, arrayOf(permission), requestCode)
+    private fun requestLocationPermission() {
+        if (isLocationPermissionGranted) {
+            return
         }
+        requestPermission(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
 
-    private fun Context.hasPermission(permissionType: String):Boolean
-    {
-        return ContextCompat.checkSelfPermission(this,permissionType) ==
+    private fun Activity.requestPermission(permission: String, requestCode: Int) {
+        ActivityCompat.requestPermissions(this, arrayOf(permission), requestCode)
+    }
+
+    private fun Context.hasPermission(permissionType: String): Boolean {
+        return ContextCompat.checkSelfPermission(this, permissionType) ==
                 PackageManager.PERMISSION_GRANTED
     }
-
-
-
-
-
-
 
 
 }
