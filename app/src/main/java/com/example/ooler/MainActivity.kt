@@ -3,10 +3,9 @@ package com.example.ooler
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.bluetooth.*
 import android.os.Bundle
 import com.example.ooler.databinding.ActivityMainBinding
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
@@ -18,7 +17,8 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import android.widget.Button
-import timber.log.Timber;
+import timber.log.Timber
+
 
 private const val ENABLE_BLUETOOTH_REQUEST_CODE = 1
 private const val LOCATION_PERMISSION_REQUEST_CODE = 2
@@ -38,7 +38,17 @@ class MainActivity : Activity() {
         val scanButton = findViewById<Button>(R.id.scan_button) as Button
 
 
-        scanButton.setOnClickListener{ startBleScan()}
+
+        scanButton.setOnClickListener{
+            if(isScanning)
+            {
+                stopBleScan()
+            }
+            else {
+                startBleScan()
+            }
+        }
+
 
     }
 
@@ -59,6 +69,17 @@ class MainActivity : Activity() {
         bluetoothManager.adapter
     }
 
+    private val scanResults = mutableListOf<ScanResult>()
+
+    private var isScanning = false
+
+        set(value) {
+            val scanButton = findViewById<Button>(R.id.scan_button) as Button
+            field = value
+            runOnUiThread { scanButton.text = if (value) " Stop Scan " else "Start Scan" }
+        }
+
+
     private val btScanner by lazy{
         bluetoothAdapter.bluetoothLeScanner
     }
@@ -66,13 +87,53 @@ class MainActivity : Activity() {
     private val scanCallback = object : ScanCallback() {
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+            val indexQuery=scanResults.indexOfFirst{it.device.address == result.device.address}
+            var flag = 0
+            if(indexQuery!=-1){
+                scanResults[indexQuery]=result
+                flag = 1
+            }
             with(result.device) {
-                Timber.i(
-                    "Found BLE device! Name: ${name ?: "Unnamed"}, address: $address"
-                )
+
+
+                if(result.device.address == "84:2E:14:83:11:68" && flag!=1)
+                {
+                    Timber.i(
+                    "Found OOLER device! Name: ${name ?: "Unnamed"}, address: $address"
+                    )
+                    scanResults.add(result)
+                    stopBleScan()
+                    connectGatt(applicationContext, false, gattCallback)
+
+                }
             }
         }
     }
+
+
+    private val gattCallback = object : BluetoothGattCallback() {
+        @SuppressLint("MissingPermission")
+        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            val deviceAddress = gatt.device.address
+
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    Log.w("BluetoothGattCallback", "Successfully connected to $deviceAddress")
+                    // TODO: Store a reference to BluetoothGatt
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    Log.w("BluetoothGattCallback", "Successfully disconnected from $deviceAddress")
+                    gatt.close()
+                }
+            } else {
+                Log.w("BluetoothGattCallback", "Error $status encountered for $deviceAddress! Disconnecting...")
+                scanResults.clear()
+                gatt.close()
+            }
+        }
+    }
+
+   /* private
+*/
 
     private val scanSettings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build()
 
@@ -92,6 +153,7 @@ class MainActivity : Activity() {
         }
     }
 
+    @SuppressLint("MissingPermission")
     private fun startBleScan()
     {
         if (!isLocationPermissionGranted)
@@ -99,23 +161,19 @@ class MainActivity : Activity() {
             requestLocationPermission()
         }
         else{
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.BLUETOOTH_SCAN
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                // TODO: Consider calling
-                //    ActivityCompat#requestPermissions
-                // here to request the missing permissions, and then overriding
-                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                //                                          int[] grantResults)
-                // to handle the case where the user grants the permission. See the documentation
-                // for ActivityCompat#requestPermissions for more details.
-                return
-            }
             btScanner.startScan(null, scanSettings, scanCallback)
+            isScanning = true
         }
     }
+
+    @SuppressLint("MissingPermission")
+    private fun stopBleScan()
+    {
+        btScanner.stopScan(scanCallback)
+        isScanning = false
+    }
+
+
 
     private fun requestLocationPermission(){
         if(isLocationPermissionGranted){
